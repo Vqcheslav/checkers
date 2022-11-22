@@ -32,26 +32,30 @@
             min-height: 100vh;
             justify-content: center;
             align-items: center;
+            justify-items: center;
             background-color: #D2D2D2;
         }
 
         .checkers-div {
             display: grid;
             grid-template-columns: repeat(8, 1fr);
-            min-width: 300px;
-            min-height: 300px;
-            width: 80vh;
-            height: 80vh;
-            max-width: 600px;
-            max-height: 600px;
+            width: 80vw;
+            height: 80vw;
+            max-width: 80vh;
+            max-height: 80vh;
             border: 2px solid burlywood;
             background-color: burlywood;
             box-shadow: 0 0 20px 3px grey;
             transition: all 1s linear;
+            margin-top: 40px;
         }
 
         .checkers-div-rotated {
             transform: rotate(180deg);
+        }
+
+        .checkers-div-dont-rotated {
+            transform: none !important;
         }
 
         .checker-div {
@@ -107,6 +111,10 @@
             height: 80%;
             border-radius: 50%;
             border: 2px solid transparent;
+            display: grid;
+            align-items: center;
+            justify-items: center;
+            color: burlywood;
         }
 
         .white-checker {
@@ -143,6 +151,7 @@
             display: grid;
             justify-items: center;
             align-content: space-between;
+            grid-gap: 10px 0;
         }
 
         .green-button {
@@ -157,10 +166,16 @@
             border: none;
         }
 
-        .p {
+        .green-button-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .copyright {
+            text-align: center;
             font-family: Arial, serif;
             font-size: 1rem;
-            margin-top: 10px;
+            margin: 20px;
         }
     </style>
 </head>
@@ -171,19 +186,109 @@
         <button id="rotate-button" class="green-button">
             Развернуть
         </button>
-        <p class="p">
+        <button id="switch-rotate-button" class="green-button">
+            Отключить автоповорот
+        </button>
+        <p class="copyright">
             With love by Vyacheslav Belchuk for university subject "OOP"
         </p>
     </div>
 </div>
 <script nonce="vqcheslav">
     window.addEventListener('load', function () {
+        const CHECKERS = document.getElementById('checkers');
+
         document.getElementById('rotate-button').addEventListener('click', function () {
-            document.getElementById('checkers').classList.toggle('checkers-div-rotated');
+            CHECKERS.classList.toggle('checkers-div-rotated');
+        });
+
+        document.getElementById('switch-rotate-button').addEventListener('click', function () {
+            CHECKERS.classList.toggle('checkers-div-dont-rotated');
+
+            if (CHECKERS.classList.contains('checkers-div-dont-rotated')) {
+                this.innerText = 'Включить автоповорот';
+            } else {
+                this.innerText = 'Отключить автоповорот';
+            }
+
+            document.getElementById('rotate-button').classList.toggle('green-button-disabled')
         });
     });
-    window.addEventListener('load', function () {
-        let positions = [
+
+    // window.addEventListener('load', function () {
+    const WHITE = 'white';
+    const BLACK = 'black';
+
+    class Position {
+        position = 0;
+
+        element;
+
+        constructor(position) {
+            this.element = document.getElementById('checker-' + position);
+            this.setPosition(position);
+        }
+
+        setPosition(position) {
+            this.position = position;
+            this.element.dataset.position = position;
+        }
+
+        getPosition() {
+            return this.position;
+        }
+
+        highlight() {
+            this.element.classList.add('open-position');
+        }
+
+        unHighlight() {
+            this.element.classList.remove('open-position');
+        }
+    }
+
+    class Checker extends Position {
+        color = '';
+
+        constructor(position, color) {
+            super(position);
+
+            this.element.classList.add('active-checker');
+            this.setColor(color);
+        }
+
+        setColor(color) {
+            if (color === 'black' || color === 'white') {
+                this.color = color;
+                this.element.dataset.color = color;
+                this.element.classList.add(color + '-checker');
+            } else {
+                console.log('Color maybe black or white in #' + this.element.id);
+            }
+        }
+
+        highlight() {
+            this.element.classList.add('checker-clicked');
+        }
+
+        unHighlight() {
+            this.element.classList.remove('checker-clicked');
+        }
+
+        remove() {
+            this.unHighlight();
+            this.element.classList.remove('active-checker');
+            this.element.classList.remove(this.color + '-checker');
+            this.element.dataset.color = '';
+        }
+    }
+
+    class Field {
+        diagonalFirst = 9;
+
+        diagonalSecond = 7;
+
+        numbersWherePositions = [
             1, 3, 5, 7,
             8, 10, 12, 14,
             17, 19, 21, 23,
@@ -194,103 +299,176 @@
             56, 58, 60, 62,
         ];
 
-        let activePositions = [];
-        let activeCheckers = [];
+        positions = {};
 
-        for (let i = 0; i < 64; i++) {
-            document.getElementById('checkers').innerHTML += `
-                <div id="checker-div-${i}" class="checker-div">
-                    <div id="checker-${i}" class="checker" data-position="${i}"><span class="checker-span"></span></div>
-                </div>
-            `;
+        checkers = {};
+
+        activeChecker = 0;
+
+        constructor()
+        {
+            for (let i = 0; i < 64; i++) {
+                document.getElementById('checkers').innerHTML += `
+                    <div id="checker-div-${i}" class="checker-div">
+                        <div id="checker-${i}" class="checker" data-position="${i}">
+                            <span class="checker-span">${i}</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            for (let number of this.numbersWherePositions) {
+                if (number <= 23) {
+                    this.addChecker(number, WHITE)
+                } else if (number >= 40) {
+                    this.addChecker(number, BLACK)
+                } else {
+                    this.addPosition(number);
+                }
+            }
+
+            console.log(this.checkers);
+
+            return this;
         }
 
-        document.querySelectorAll('.checker-div .checker').forEach(function (element, i) {
-            if (positions.includes(i)) {
-                element.classList.add('active-position');
+        highlightOpenPositionsToChecker(checkerNumber, nesting = 1)
+        {
+            let openPositions = [];
 
-                activePositions.push(i);
-
-                if ( i <= 23) {
-                    element.classList.add('active-checker');
-                    element.classList.add('white-checker');
-                    element.dataset.color = 'white';
-
-                    activeCheckers.push(i);
-                }
-
-                console.log(activeCheckers);
-
-                if (i >= 40) {
-                    element.classList.add('active-checker');
-                    element.classList.add('black-checker');
-                    element.dataset.color = 'black';
-
-                    activeCheckers.push(i);
-                }
-
-                element.addEventListener('click', function () {
-                    if (element.classList.contains('active-checker')) {
-                        document.querySelectorAll('.checker-clicked').forEach(function (element) {
-                            element.classList.remove('checker-clicked');
-                        })
-
-                        highlightOpenPositionsToChecker(i);
-
-                        this.classList.toggle('checker-clicked');
+            for (let positionNumber of this.numbersWherePositions) {
+                for (let i = 1; i <= nesting; i++) {
+                    if (
+                        (
+                            positionNumber === checkerNumber - this.diagonalFirst * i
+                            || positionNumber === checkerNumber + this.diagonalFirst * i
+                            || positionNumber === checkerNumber - this.diagonalSecond * i
+                            || positionNumber === checkerNumber + this.diagonalSecond * i
+                        )
+                        && ! Array.from(Object.keys(this.checkers)).includes(positionNumber.toString())
+                    ) {
+                        openPositions.push(positionNumber);
                     }
-                });
-            }
-        });
-
-        document.querySelectorAll('.active-position').forEach(function (element) {
-            element.addEventListener('click', function () {
-                if (this.classList.contains('open-position')) {
-                    let neededPosition = Number(this.dataset.position);
-                    let activeChecker = document.querySelector('.checker-clicked');
-                    let activeCheckerColor = activeChecker.dataset.color;
-                    let activeCheckerPosition = Number(activeChecker.dataset.position);
-
-                    console.log(activeCheckers);
-
-                    activeCheckers.splice(activeCheckers.indexOf(activeCheckerPosition), 1, neededPosition);
-
-                    unHighlightedAllPositions();
-
-                    activeChecker.classList.remove('checker-clicked');
-                    activeChecker.classList.remove(activeCheckerColor + '-checker');
-                    activeChecker.classList.remove('active-checker');
-
-                    this.classList.add(activeCheckerColor + '-checker');
-                    this.classList.add('active-checker');
-                    this.dataset.color = activeCheckerColor;
                 }
-            })
-        });
+            }
 
-        function highlightOpenPositionsToChecker(checkerPosition) {
-            let maybePositionsToChecker = [
-                checkerPosition - 9,
-                checkerPosition - 7,
-                checkerPosition + 7,
-                checkerPosition + 9,
-            ];
+            console.log(openPositions, 'open positions to #' + checkerNumber);
 
-            unHighlightedAllPositions();
+            for (let positionNumber of openPositions) {
+                this.positions[positionNumber].highlight();
+            }
+        }
 
-            for (let i of maybePositionsToChecker) {
-                if (positions.includes(i) && ! activeCheckers.includes(i)) {
-                    document.getElementById('checker-' + i).classList.add('open-position');
+        setActiveChecker(position)
+        {
+            this.activeChecker = position;
+        }
+
+        getActiveChecker()
+        {
+            return this.activeChecker;
+        }
+
+        moveActiveCheckerToPosition(activePositionNumber, neededPositionNumber)
+        {
+            let activeChecker = this.checkers[activePositionNumber];
+
+            this.removePosition(neededPositionNumber);
+
+            let neededChecker = this.addChecker(neededPositionNumber, activeChecker.color);
+
+            this.removeChecker(activeChecker);
+        }
+
+        unHighlightedAllPositions()
+        {
+            for (let positionNumber in this.positions) {
+                let position = this.positions[positionNumber];
+                position.unHighlight();
+            }
+
+            return this;
+        }
+
+        unHighlightedAllCheckers()
+        {
+            for (let checkerNumber in this.checkers) {
+                let checker = this.checkers[checkerNumber];
+                checker.unHighlight();
+            }
+
+            return this;
+        }
+
+        addChecker(positionNumber, color)
+        {
+            let newChecker = new Checker(positionNumber, color);
+
+            this.checkers[positionNumber] = newChecker;
+
+            this.removePosition(positionNumber)
+
+            newChecker.element.addEventListener('click', this.clickToChecker(newChecker));
+
+            return newChecker;
+        }
+
+        clickToChecker(newChecker) {
+            return () => {
+                if (
+                    newChecker.element.classList.contains('active-checker')
+                    && ! newChecker.element.classList.contains('checker-clicked')
+                ) {
+                    this.unHighlightedAllPositions();
+                    this.unHighlightedAllCheckers();
+
+                    newChecker.highlight();
+                    this.setActiveChecker(newChecker.position);
+
+                    this.highlightOpenPositionsToChecker(newChecker.position);
                 }
             }
         }
 
-        function unHighlightedAllPositions() {
-            document.querySelectorAll('.open-position').forEach(function (element) {
-                element.classList.remove('open-position');
-            });
+        removeChecker(checker)
+        {
+            let positionNumber = checker.position;
+
+            this.addPosition(positionNumber);
+
+            delete this.checkers[positionNumber];
+
+            checker.remove();
         }
-    });
+
+        addPosition(positionNumber)
+        {
+            let newPosition = new Position(positionNumber);
+
+            this.positions[positionNumber] = newPosition;
+
+            newPosition.element.addEventListener('click', this.clickToPosition(newPosition));
+
+            return newPosition;
+        }
+
+        clickToPosition(newPosition)
+        {
+            return () => {
+                if (newPosition.element.classList.contains('open-position')) {
+                    this.unHighlightedAllPositions();
+                    this.unHighlightedAllCheckers();
+
+                    this.moveActiveCheckerToPosition(this.getActiveChecker(), newPosition.position);
+                }
+            }
+        }
+
+        removePosition(positionNumber)
+        {
+            delete this.positions[positionNumber];
+        }
+    }
 </script>
 </body>
 </html>
