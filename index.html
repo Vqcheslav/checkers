@@ -156,7 +156,11 @@
         .checker-crown::after {
             content: '\1F451';
             position: absolute;
-            top: 15px;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            justify-content: center;
+            align-items: center;
         }
 
         .open-position {
@@ -304,6 +308,10 @@
             this.element.classList.remove('active-checker');
             this.element.classList.remove(this.color + '-checker');
             this.element.dataset.color = '';
+
+            this.status = CHECKER;
+            this.numberOfCellsForMove = 1;
+            this.element.classList.remove('checker-crown')
         }
 
         isCrown() {
@@ -415,7 +423,7 @@
                 for (let i = 1; i <= activeChecker.getNumberOfCellsForMove(); i++) {
                     if (
                         checkPositionFunction(checkerNumber, i).includes(positionNumber)
-                        && !Array.from(Object.keys(this.checkers)).includes(positionNumber.toString())
+                        && !this.isChecker(positionNumber)
                     ) {
                         openPositions.push(positionNumber);
                     } else if (
@@ -449,26 +457,35 @@
 
         moveActiveCheckerToPosition(activePositionNumber, neededPositionNumber) {
             let activeChecker = this.getChecker(activePositionNumber);
+            let activeCheckerWasCrown = activeChecker.isCrown();
+            let activeCheckerColor = activeChecker.color;
 
-            if (activeChecker.color !== this.getWhoWentLast()) {
+            if (activeCheckerColor !== this.getWhoWentLast()) {
+                this.removePosition(neededPositionNumber);
+
+                this.removeChecker(activeChecker);
+
+                let neededChecker = this.addChecker(neededPositionNumber, activeCheckerColor);
+
+                if (
+                    neededChecker.color === WHITE && [56, 58, 60, 62].includes(neededChecker.position)
+                    || neededChecker.color === BLACK && [1, 3, 5, 7].includes(neededChecker.position)
+                    || activeCheckerWasCrown
+                ) {
+                    neededChecker.setCrown();
+                }
+
+                this.setWhoWentLast(activeCheckerColor);
+
+                // for (let j = activePositionNumber; j <= neededPositionNumber; j += (activePositionNumber - neededPositionNumber)) {
+                //     if (this.isChecker(j) && activeCheckerColor !== this.getChecker(j).color) {
+                //         this.removeChecker(this.getChecker(j));
+                //     }
+                // }
+
                 if (this.isChecker((activePositionNumber + neededPositionNumber) / 2)) {
                     this.removeChecker(this.getChecker((activePositionNumber + neededPositionNumber) / 2));
                 }
-
-                this.removePosition(neededPositionNumber);
-
-                let neededChecker = this.addChecker(neededPositionNumber, activeChecker.color);
-
-                // if (
-                //     neededChecker.color === WHITE && [56, 58, 60, 62].includes(neededChecker.position)
-                //     || neededChecker.color === BLACK && [1, 3, 5, 7].includes(neededChecker.position)
-                // ) {
-                //     neededChecker.setCrown();
-                // }
-
-                this.setWhoWentLast(activeChecker.color);
-
-                this.removeChecker(activeChecker);
 
                 this.rotateCheckers();
             } else {
