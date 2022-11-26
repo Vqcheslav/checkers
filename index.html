@@ -333,6 +333,10 @@
             this.element.classList.add('open-position');
         }
 
+        isHighlighted() {
+            return this.element.classList.contains('open-position');
+        }
+
         unHighlight() {
             this.element.classList.remove('open-position');
         }
@@ -362,8 +366,20 @@
             }
         }
 
+        isActiveChecker() {
+            return this.element.classList.contains('active-checker');
+        }
+
+        getColor() {
+            return this.color;
+        }
+
         highlight() {
             this.element.classList.add('checker-clicked');
+        }
+
+        isHighlighted() {
+            return this.element.classList.contains('checker-clicked');
         }
 
         unHighlight() {
@@ -373,11 +389,11 @@
         remove() {
             this.unHighlight();
             this.element.classList.remove('active-checker');
-            this.element.classList.remove(this.color + '-checker');
+            this.element.classList.remove(this.getColor() + '-checker');
             this.element.dataset.color = '';
 
             this.status = CHECKER;
-            this.numberOfCellsForMove = 1;
+            this.setNumberOfCellsForMove(1);
             this.element.classList.remove('checker-crown')
         }
 
@@ -387,8 +403,12 @@
 
         setCrown() {
             this.status = CROWN;
-            this.numberOfCellsForMove = 7;
+            this.setNumberOfCellsForMove(7);
             this.element.classList.add('checker-crown');
+        }
+
+        setNumberOfCellsForMove(number) {
+            this.numberOfCellsForMove = number;
         }
 
         getNumberOfCellsForMove() {
@@ -451,19 +471,19 @@
                 }
             }
 
-            if (isDebug) {
-                this.isDebug = isDebug;
-
-                document.querySelectorAll('.checker-span').forEach(function (element) {
-                    element.classList.add('checker-span-debugging');
-                })
-            }
+            this.setDebuggingMode(isDebug);
 
             return this;
         }
 
         highlightOpenPositionsToChecker(activeCheckerPositionNumber) {
-            if (! this.isChecker(activeCheckerPositionNumber)) {
+            if (
+                ! this.isChecker(activeCheckerPositionNumber)
+                || (
+                    this.isChecker(activeCheckerPositionNumber)
+                    && this.getChecker(activeCheckerPositionNumber).getColor() === this.getWhoWentLast()
+                )
+            ) {
                 this.consoleLogIfDebug(
                     'Error in highlightOpenPositionsToChecker(), invalid activeCheckerPositionNumber = ',
                     activeCheckerPositionNumber
@@ -482,7 +502,7 @@
             this.consoleLogIfDebug('Open positions to', activeCheckerPositionNumber, openPositions);
 
             for (let positionNumber of openPositions) {
-                this.positions[positionNumber].highlight();
+                this.getPosition(positionNumber).highlight();
             }
         }
 
@@ -521,7 +541,7 @@
                     }
                 } else if (
                     this.isChecker(mayBePosition)
-                    && color !== this.getChecker(mayBePosition).color
+                    && color !== this.getChecker(mayBePosition).getColor()
                     && ! this.isChecker(maybePositionIfCanRemove(positionNumber, mayBePosition))
                     && this.isPosition(maybePositionIfCanRemove(positionNumber, mayBePosition))
                 ) {
@@ -538,7 +558,7 @@
 
         getOpenPositionsForChecker(checker) {
             let openPositions = [];
-            let diagonals = this.getDiagonals(checker.position, checker.getNumberOfCellsForMove());
+            let diagonals = this.getDiagonals(checker.getPosition(), checker.getNumberOfCellsForMove());
 
             let mayBePositions = [
                 ...this.getOpenPositionsToHalfDiagonal(diagonals.firstDiagonal.less, checker, true, true),
@@ -546,8 +566,6 @@
                 ...this.getOpenPositionsToHalfDiagonal(diagonals.secondDiagonal.less, checker, false, true),
                 ...this.getOpenPositionsToHalfDiagonal(diagonals.secondDiagonal.more, checker, false, false),
             ];
-
-            this.consoleLogIfDebug('mayBePositions', mayBePositions);
 
             for (let positionNumber of mayBePositions) {
                 if (this.isPosition(positionNumber)) {
@@ -578,7 +596,7 @@
                 if (checker.isCrown()) {
                     if (this.isChecker(positionNumber)) {
                         if (
-                            this.getChecker(positionNumber).color === checker.color
+                            this.getChecker(positionNumber).getColor() === checker.getColor()
                             || this.isChecker(nextPositionNumber(positionNumber))
                         ) {
                             break;
@@ -595,7 +613,7 @@
                     }
                 } else {
                     if (this.isChecker(positionNumber)) {
-                        if (this.getChecker(positionNumber).color === checker.color) {
+                        if (this.getChecker(positionNumber).getColor() === checker.getColor()) {
                             break;
                         } else if (this.isPosition(nextPositionNumber(positionNumber))) {
                             this.consoleLogIfDebug('You can remove this checker = ', positionNumber);
@@ -605,10 +623,10 @@
                     } else if (
                         this.isPosition(positionNumber)
                         && (
-                            checker.color === WHITE
+                            checker.getColor() === WHITE
                             && isLess
                         ) || (
-                            checker.color === BLACK
+                            checker.getColor() === BLACK
                             && ! isLess
                         )
                     ) {
@@ -689,7 +707,7 @@
 
             let activeChecker = this.getChecker(activePositionNumber);
             let activeCheckerWasCrown = activeChecker.isCrown();
-            let activeCheckerColor = activeChecker.color;
+            let activeCheckerColor = activeChecker.getColor();
 
             if (activeCheckerColor !== this.getWhoWentLast()) {
                 this.removePosition(neededPositionNumber);
@@ -701,11 +719,11 @@
                 if (
                     activeCheckerWasCrown
                     || (
-                        neededChecker.color === WHITE
-                        && this.positionsWhereWhiteCheckersGetCrown.includes(neededChecker.position)
+                        neededChecker.getColor() === WHITE
+                        && this.positionsWhereWhiteCheckersGetCrown.includes(neededChecker.getPosition())
                     ) || (
-                        neededChecker.color === BLACK
-                        && this.positionsWhereBlackCheckersGetCrown.includes(neededChecker.position)
+                        neededChecker.getColor() === BLACK
+                        && this.positionsWhereBlackCheckersGetCrown.includes(neededChecker.getPosition())
                     )
                 ) {
                     neededChecker.setCrown();
@@ -745,7 +763,7 @@
                 if (this.isChecker(checkerForRemovePositionNumber)) {
                     let checkerToRemove = this.getChecker(checkerForRemovePositionNumber);
 
-                    this.changeCounterOfRemovedCheckers(checkerToRemove.color);
+                    this.changeCounterOfRemovedCheckers(checkerToRemove.getColor());
                     this.removeCheckerAndCreatePosition(checkerToRemove);
                 }
             }
@@ -772,7 +790,7 @@
 
         unHighlightedAllPositions() {
             for (let positionNumber in this.positions) {
-                let position = this.positions[positionNumber];
+                let position = this.getPosition(positionNumber);
                 position.unHighlight();
             }
 
@@ -817,34 +835,31 @@
 
         addListenerToChecker(checker) {
             checker.element.addEventListener('click', () => {
-                if (
-                    this.isChecker(checker.position)
-                    && checker.color !== this.getWhoWentLast()
-                ) {
+                if (checker.isActiveChecker() && checker.getColor() !== this.getWhoWentLast()) {
                     this.unHighlightedAllPositions();
                     this.unHighlightedAllCheckers();
 
                     checker.highlight();
-                    this.setActiveCheckerPositionNumber(checker.position);
-                    this.highlightOpenPositionsToChecker(checker.position);
+                    this.setActiveCheckerPositionNumber(checker.getPosition());
+                    this.highlightOpenPositionsToChecker(checker.getPosition());
                 } else {
                     this.consoleLogIfDebug(
-                        'Error in addListenerToChecker: cannot play with checker = ',
-                        checker.position
+                        'Warning in addListenerToChecker: cannot play with checker = ',
+                        checker.getPosition()
                     );
                 }
             });
         }
 
         removeChecker(checker) {
-            delete this.checkers[checker.position];
+            delete this.checkers[checker.getPosition()];
 
             checker.remove();
         }
 
         removeCheckerAndCreatePosition(checker) {
             this.removeChecker(checker);
-            this.createPosition(checker.position);
+            this.createPosition(checker.getPosition());
         }
 
         isPosition(positionNumber) {
@@ -861,19 +876,21 @@
             return newPosition;
         }
 
+        getPosition(positionNumber) {
+            return this.positions[positionNumber];
+        }
+
         addListenerToPosition(position) {
             position.element.addEventListener('click', () => {
-                if (this.isPosition(position.position)) {
+                if (position.isHighlighted()) {
                     this.unHighlightedAllPositions();
                     this.unHighlightedAllCheckers();
 
-                    this.moveActiveCheckerToPosition(this.getActiveCheckerPositionNumber(), position.position);
+                    this.moveActiveCheckerToPosition(this.getActiveCheckerPositionNumber(), position.getPosition());
                 } else {
-                    this.unHighlightedAllPositions();
-
                     this.consoleLogIfDebug(
-                        'Error in addListenerToPosition: cannot moved to position = ',
-                        position.position
+                        'Warning in addListenerToPosition: cannot moved to position = ',
+                        position.getPosition()
                     );
                 }
             });
@@ -929,20 +946,34 @@
         }
 
         changeCounterOfRemovedCheckers(color) {
+            let beginAgain = false;
+
             if (color === BLACK) {
                 this.counterOfRemovedBlackCheckers++;
 
                 document
                     .getElementById('white-moves-counter')
                     .innerText = this.counterOfRemovedBlackCheckers.toString();
+
+                if (this.counterOfRemovedBlackCheckers === 12) {
+                    beginAgain = confirm('Белые победили, начать заново?');
+                }
             } else if (color === WHITE) {
                 this.counterOfRemovedWhiteCheckers++;
 
                 document
                     .getElementById('black-moves-counter')
                     .innerText = this.counterOfRemovedWhiteCheckers.toString();
+
+                if (this.counterOfRemovedWhiteCheckers === 12) {
+                    beginAgain = confirm('Черные победили, начать заново?');
+                }
             } else {
                 this.consoleLogIfDebug('Error in changeCounterOfRemovedCheckers: undefined color = ', color);
+            }
+
+            if (beginAgain) {
+                window.location.reload();
             }
         }
 
@@ -965,9 +996,33 @@
         isDebuggingMode() {
             return this.isDebug;
         }
+
+        setDebuggingMode(isDebug) {
+            if (isDebug === true || isDebug === false) {
+                this.isDebug = isDebug;
+            } else {
+                this.consoleLogIfDebug('Error in setDebuggingMode, invalid bool = ', bool);
+
+                return false;
+            }
+
+            let listOfCheckerSpans = document.querySelectorAll('.checker-span');
+
+            if (isDebug === true) {
+                listOfCheckerSpans.forEach(function (element) {
+                    element.classList.add('checker-span-debugging');
+                })
+            } else if (isDebug === false) {
+                listOfCheckerSpans.forEach(function (element) {
+                    element.classList.remove('checker-span-debugging');
+                })
+            }
+
+            return true;
+        }
     }
 
-    new Field();
+    let field = new Field();
 </script>
 </body>
 </html>
