@@ -47,7 +47,7 @@
             background-color: burlywood;
             box-shadow: 0 0 20px 3px grey;
             transition: all 1s linear;
-            margin-top: 40px;
+            margin-top: 20px;
         }
 
         .rotate-180 {
@@ -190,7 +190,7 @@
         }
 
         .green-button {
-            padding: 15px 33px;
+            padding: 13px 20px;
             display: block;
             font-family: Arial, serif;
             font-size: 1rem;
@@ -370,7 +370,7 @@
 
         numberOfCellsForMove = 1;
 
-        lastPosition = 999;
+        lastPosition = 0;
 
         canMoveWithoutRemoving = true;
 
@@ -379,6 +379,7 @@
 
             this.element.classList.add('active-checker');
             this.setColor(color);
+            this.setLastPosition(position);
         }
 
         setColor(color) {
@@ -633,15 +634,15 @@
                         this.isChecker(positionNumber)
                         && checker.getColor() !== this.getChecker(positionNumber).getColor()
                         && this.isPosition(this.maybePositionIfCanRemove(checker.getPosition(), positionNumber))
-                        && (
-                            (
-                                Math.abs(checker.getLastPosition() - checker.getPosition())
-                                >= Math.abs((checker.getPosition() - positionNumber))
-                            ) || (
-                                this.getDiagonalNumber(checker.getPosition(), positionNumber)
-                                !== this.getDiagonalNumber(checker.getPosition(), checker.getLastPosition())
-                            )
-                        )
+                        // && (
+                        //     (
+                        //         Math.abs(checker.getLastPosition() - checker.getPosition())
+                        //         <= Math.abs((checker.getPosition() - positionNumber))
+                        //     ) || (
+                        //         this.getDiagonalNumber(checker.getPosition(), positionNumber)
+                        //         !== this.getDiagonalNumber(checker.getPosition(), checker.getLastPosition())
+                        //     )
+                        // )
                     ) {
                         this.consoleLogIfDebug('You can remove this checker = ', positionNumber);
 
@@ -665,21 +666,37 @@
                             if (diagonal === this.getDiagonalFirst()) {
                                 stopOnMinusDiagonalFirst = true;
 
-                                this.consoleLogIfDebug(checker.getPosition(), 'stopOnMinusDiagonalFirst = true', positionNumber);
+                                this.consoleLogIfDebug(
+                                    checker.getPosition(),
+                                    'stopOnMinusDiagonalFirst = true',
+                                    positionNumber
+                                );
                             } else {
                                 stopOnMinusDiagonalSecond = true;
 
-                                this.consoleLogIfDebug(checker.getPosition(), 'stopOnMinusDiagonalSecond = true', positionNumber);
+                                this.consoleLogIfDebug(
+                                    checker.getPosition(),
+                                    'stopOnMinusDiagonalSecond = true',
+                                    positionNumber
+                                );
                             }
                         } else {
                             if (diagonal === this.getDiagonalFirst()) {
                                 stopOnPlusDiagonalFirst = true;
 
-                                this.consoleLogIfDebug(checker.getPosition(), 'stopOnPlusDiagonalFirst = true', positionNumber);
+                                this.consoleLogIfDebug(
+                                    checker.getPosition(),
+                                    'stopOnPlusDiagonalFirst = true',
+                                    positionNumber
+                                );
                             } else {
                                 stopOnPlusDiagonalSecond = true;
 
-                                this.consoleLogIfDebug(checker.getPosition(), 'stopOnPlusDiagonalSecond = true', positionNumber);
+                                this.consoleLogIfDebug(
+                                    checker.getPosition(),
+                                    'stopOnPlusDiagonalSecond = true',
+                                    positionNumber
+                                );
                             }
                         }
                     }
@@ -986,6 +1003,8 @@
         }
 
         removePosition(positionNumber) {
+            this.getPosition(positionNumber).unHighlight();
+
             delete this.positions[positionNumber];
         }
 
