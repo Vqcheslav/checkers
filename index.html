@@ -548,7 +548,7 @@
                 return false;
             }
 
-            let openPositions = this.getOpenPositionsForCheckerLightVersion(
+            let openPositions = this.getOpenPositionsForChecker(
                 this.getChecker(activeCheckerPositionNumber)
             );
 
@@ -564,7 +564,7 @@
             }
         }
 
-        getOpenPositionsForCheckerLightVersion(checker) {
+        getOpenPositionsForChecker(checker) {
             let openPositions = [];
 
             let stopOnMinusDiagonalFirst = false;
@@ -634,15 +634,6 @@
                         this.isChecker(positionNumber)
                         && checker.getColor() !== this.getChecker(positionNumber).getColor()
                         && this.isPosition(this.maybePositionIfCanRemove(checker.getPosition(), positionNumber))
-                        // && (
-                        //     (
-                        //         Math.abs(checker.getLastPosition() - checker.getPosition())
-                        //         <= Math.abs((checker.getPosition() - positionNumber))
-                        //     ) || (
-                        //         this.getDiagonalNumber(checker.getPosition(), positionNumber)
-                        //         !== this.getDiagonalNumber(checker.getPosition(), checker.getLastPosition())
-                        //     )
-                        // )
                     ) {
                         this.consoleLogIfDebug('You can remove this checker = ', positionNumber);
 
@@ -773,15 +764,6 @@
             return result;
         }
 
-        // checkAllPositionsIfCanBitFunction(positionNumber, i = 1) {
-        //     return [
-        //         positionNumber - this.getDiagonalFirst() * i,
-        //         positionNumber + this.getDiagonalFirst() * i,
-        //         positionNumber - this.getDiagonalSecond() * i,
-        //         positionNumber + this.getDiagonalSecond() * i
-        //     ];
-        // }
-
         switchCourse(checker) {
             let openPositions;
 
@@ -792,7 +774,7 @@
 
             checker.setCanMoveWithoutRemoving(false);
 
-            openPositions = this.getOpenPositionsForCheckerLightVersion(checker)
+            openPositions = this.getOpenPositionsForChecker(checker)
 
             this.setCheckersWhoCanMove(checker.getPosition());
 
@@ -1105,15 +1087,6 @@
             if (this.isDebuggingMode()) {
                 console.log(...variables);
             }
-        }
-
-        consoleLogAllVariables() {
-            console.log('this.positions = ', this.positions);
-            console.log('checkers = ', this.checkers);
-            console.log('activeChecker = ', this.activeCheckerPositionNumber);
-            console.log('whoWentLast = ', this.whoWentLast);
-            console.log('counterOfRemovedBlackCheckers = ', this.counterOfRemovedBlackCheckers);
-            console.log('counterOfRemovedWhiteCheckers = ', this.counterOfRemovedWhiteCheckers);
         }
 
         isDebuggingMode() {
