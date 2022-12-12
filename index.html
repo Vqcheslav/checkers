@@ -50,8 +50,12 @@
             margin-top: 20px;
         }
 
-        .rotate-180 {
-            transform: rotate(180deg);
+        .rotate {
+            transform: rotate3d(0, 1, 0, 180deg) rotate3d(0, 0, 1, 180deg);
+        }
+
+        .rotate-once {
+            transform: rotate3d(0, 1, 0, 180deg) rotate3d(0, 0, 1, 180deg);
         }
 
         .dont-rotated {
@@ -168,7 +172,7 @@
         }
 
         .checker-crown::after {
-            content: '⁕';
+            content: "⁕";
             color: goldenrod;
             position: absolute;
             width: 16px;
@@ -298,7 +302,7 @@
             Развернуть
         </button>
         <button id="switch-rotate-button" class="green-button">
-            Отключить автоповорот
+            Включить автоповорот
         </button>
         <p class="copyright">
             &copy; 2022, Вячеслав Бельчук
@@ -308,19 +312,23 @@
 <script nonce="vqcheslav">
     window.addEventListener('load', function () {
         document.getElementById('rotate-button').addEventListener('click', function () {
-            Field.rotateCheckers();
+            if (! this.classList.contains('green-button-disabled')) {
+                Field.rotateCheckersOnce();
+            }
         });
 
         document.getElementById('switch-rotate-button').addEventListener('click', function () {
-            let toggle = Field.toggleCanRotateCheckers();
+            let toggle = Field.isAutoRotate();
+
+            Field.setAutoRotate(! toggle);
 
             if (toggle) {
                 this.innerText = 'Включить автоповорот';
+                document.getElementById('rotate-button').classList.remove('green-button-disabled');
             } else {
                 this.innerText = 'Отключить автоповорот';
+                document.getElementById('rotate-button').classList.add('green-button-disabled');
             }
-
-            document.getElementById('rotate-button').classList.toggle('green-button-disabled');
         });
     });
 
@@ -510,6 +518,8 @@
         positionsWhereWhiteCheckersGetCrown = [1, 3, 5, 7];
 
         checkersWhoCanMove = [];
+
+        static autoRotate = false;
 
         constructor(isDebug = false) {
             for (let i = 0; i < 64; i++) {
@@ -790,7 +800,7 @@
 
                 this.setWhoWentLast(checker.getColor());
 
-                this.constructor.rotateCheckers();
+                this.rotateCheckers();
 
                 return true;
             }
@@ -995,22 +1005,46 @@
             delete this.positions[positionNumber];
         }
 
-        static rotateCheckers() {
-            GAME_FIELD.classList.toggle('rotate-180');
+        rotateCheckers() {
+            if (! Field.isAutoRotate()) {
+                return false;
+            }
 
-            document.querySelectorAll('.checker-span').forEach((element) => {
-                element.classList.toggle('rotate-180');
-            });
+            GAME_FIELD.classList.remove('rotate-once');
+
+            if (this.getWhoWentLast() === BLACK) {
+                GAME_FIELD.classList.remove('rotate');
+
+                document.querySelectorAll('.checker-span').forEach((element) => {
+                    element.classList.remove('rotate');
+                });
+            } else {
+                GAME_FIELD.classList.add('rotate');
+
+                document.querySelectorAll('.checker-span').forEach((element) => {
+                    element.classList.add('rotate');
+                });
+            }
+
+            return true;
         }
 
-        static toggleCanRotateCheckers() {
-            GAME_FIELD.classList.toggle('dont-rotated');
+        static rotateCheckersOnce() {
+            let isContainRotateClass = GAME_FIELD.classList.contains('rotate');
 
-            document.querySelectorAll('.checker-span').forEach((element) => {
-                element.classList.toggle('dont-rotated');
-            });
+            GAME_FIELD.classList.remove('rotate');
 
-            return GAME_FIELD.classList.contains('dont-rotated');
+            if (isContainRotateClass || GAME_FIELD.classList.contains('rotate-once')) {
+                GAME_FIELD.classList.remove('rotate-once');
+                document.querySelectorAll('.checker-span').forEach((element) => {
+                    element.classList.remove('rotate-once');
+                });
+            } else {
+                GAME_FIELD.classList.add('rotate-once');
+                document.querySelectorAll('.checker-span').forEach((element) => {
+                    element.classList.add('rotate-once');
+                });
+            }
         }
 
         setWhoWentLast(color) {
@@ -1086,6 +1120,14 @@
 
         getDiagonalSecond() {
             return this.diagonalSecond;
+        }
+
+         static isAutoRotate() {
+            return this.autoRotate;
+        }
+
+        static setAutoRotate(bool = true) {
+            this.autoRotate = bool;
         }
 
         consoleLogIfDebug(...variables) {
