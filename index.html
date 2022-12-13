@@ -8,6 +8,7 @@
     <meta http-equiv="Content-Security-Policy"
           content="script-src 'unsafe-inline' 'nonce-vqcheslav' 'strict-dynamic' http: https:; object-src 'none'; base-uri 'none';"
     >
+    <meta name="description" content="Шашки (2 игрока) Вячеслав Бельчук">
     <link rel="icon" href="https://www.247games.com/link-assets/checkers/247/icon.png" type="image/png">
     <title>
         Шашки &copy; Вячеслав Бельчук
@@ -198,19 +199,25 @@
             grid-gap: 10px 0;
         }
 
-        .green-button {
+        .button {
             padding: 13px 20px;
             display: block;
             font-family: Arial, serif;
             font-size: 1rem;
             border-radius: 18px;
-            color: green;
-            background-color: #d1f5d9;
+            color: #FFFFFF;
+            background: linear-gradient(95deg, #72727299, #23232399);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease-in-out;
             cursor: pointer;
-            border: none;
         }
 
-        .green-button-disabled {
+        .button:hover {
+            color: #000000;
+            background: linear-gradient(110.72deg, rgba(255, 255, 255, 0.36) 1.21%, rgba(255, 255, 255, 0.18) 100%);
+        }
+
+        .button-disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
@@ -242,10 +249,15 @@
             font-family: Arial, serif;
             font-size: 1.5rem;
             text-align: center;
-            color: goldenrod;
-            background-color: white;
+            color: darkgoldenrod;
+            background-color: #FFFFFF;
             padding: 15px 15px;
             border-radius: 18px;
+        }
+
+        .description-black {
+            background-color: #000000;
+            color: goldenrod;
         }
 
         .moves-counter {
@@ -276,9 +288,9 @@
         Шашки (2 игрока)
     </h1>
     <div class="desc-div">
-        <h3 id="color-to-move" class="description">
+        <p id="color-to-move" class="description">
             Ход белых
-        </h3>
+        </p>
         <div id="moves-counter" class="moves-counter">
             <div
                     id="white-moves-counter"
@@ -298,10 +310,10 @@
     </div>
     <div id="checkers" class="checkers-div"></div>
     <div class="checkers-controls">
-        <button id="rotate-button" class="green-button">
+        <button id="rotate-button" class="button">
             Развернуть
         </button>
-        <button id="switch-rotate-button" class="green-button">
+        <button id="switch-rotate-button" class="button">
             Включить автоповорот
         </button>
         <p class="copyright">
@@ -312,7 +324,7 @@
 <script nonce="vqcheslav">
     window.addEventListener('load', function () {
         document.getElementById('rotate-button').addEventListener('click', function () {
-            if (! this.classList.contains('green-button-disabled')) {
+            if (! this.classList.contains('button-disabled')) {
                 Field.rotateCheckersOnce();
             }
         });
@@ -324,10 +336,10 @@
 
             if (toggle) {
                 this.innerText = 'Включить автоповорот';
-                document.getElementById('rotate-button').classList.remove('green-button-disabled');
+                document.getElementById('rotate-button').classList.remove('button-disabled');
             } else {
                 this.innerText = 'Отключить автоповорот';
-                document.getElementById('rotate-button').classList.add('green-button-disabled');
+                document.getElementById('rotate-button').classList.add('button-disabled');
             }
         });
     });
@@ -1056,13 +1068,12 @@
 
             this.whoWentLast = color;
             let descAboutColorToMove = document.getElementById('color-to-move');
+            descAboutColorToMove.classList.toggle('description-black');
 
             if (color === WHITE) {
                 descAboutColorToMove.innerText = 'Ход черных';
-                descAboutColorToMove.style.backgroundColor = BLACK;
             } else {
                 descAboutColorToMove.innerText = 'Ход белых';
-                descAboutColorToMove.style.backgroundColor = WHITE;
             }
 
             return true;
