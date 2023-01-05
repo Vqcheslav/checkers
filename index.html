@@ -160,6 +160,10 @@
             border: 2px solid grey;
         }
 
+        .checker-highlighted {
+            box-shadow: 0 0 12px 1px yellow;
+        }
+
         .checker-clicked {
             box-shadow: 0 0 12px 1px red;
         }
@@ -426,16 +430,32 @@
         }
 
         highlight() {
-            this.element.classList.add('checker-clicked');
+            this.element.classList.add('checker-highlighted');
 
             return this;
         }
 
         isHighlighted() {
-            return this.element.classList.contains('checker-clicked');
+            return this.element.classList.contains('checker-highlighted');
         }
 
         unHighlight() {
+            this.element.classList.remove('checker-highlighted');
+
+            return this;
+        }
+
+        click() {
+            this.element.classList.add('checker-clicked');
+
+            return this;
+        }
+
+        isClicked() {
+            return this.element.classList.contains('checker-clicked');
+        }
+
+        unClick() {
             this.element.classList.remove('checker-clicked');
 
             return this;
@@ -443,13 +463,14 @@
 
         remove() {
             this.unHighlight();
+            this.unClick();
             this.element.classList.remove('active-checker');
             this.element.classList.remove(this.getColor() + '-checker');
             this.element.dataset.color = '';
-
             this.status = CHECKER;
             this.setNumberOfCellsForMove(1);
             this.element.classList.remove('checker-crown');
+            this.element.parentNode.innerHTML += '';
         }
 
         isCrown() {
@@ -484,7 +505,7 @@
             return this.lastPosition;
         }
 
-        setCanMoveWithoutRemoving(bool) {
+        setCanMoveWithoutRemoving(bool = true) {
             this.canMoveWithoutRemoving = bool;
 
             return this;
@@ -656,6 +677,7 @@
                             )
                         ) {
                             openPositions.push(positionNumber);
+                            // checker.highlight();
                         }
                     } else if (
                         this.isChecker(positionNumber)
@@ -667,6 +689,9 @@
                         let nextPosition = this.maybePositionIfCanRemove(checker.getPosition(), positionNumber);
 
                         openPositions.push(nextPosition);
+                        checker.highlight();
+                        checker.setCanMoveWithoutRemoving(false);
+                        this.setCheckersWhoCanMove(checker.getPosition());
 
                         if (checker.isCrown()) {
                             for (let i = 1; i <= 6; i++) {
@@ -770,6 +795,7 @@
             } else {
                 this.unHighlightedAllPositions();
                 this.unHighlightedAllCheckers();
+                this.unClickedAllCheckers();
 
                 this.consoleLogIfDebug(
                     'Error in moveActiveCheckerToPosition: cannot moved because already went = ',
@@ -792,8 +818,6 @@
         }
 
         switchCourse(checker) {
-            let openPositions;
-
             let isRemovedAnyChecker = this.removeCheckersInThisDiagonal(
                 checker.getLastPosition(),
                 checker.getPosition()
@@ -801,23 +825,31 @@
 
             checker.setCanMoveWithoutRemoving(false);
 
-            openPositions = this.getOpenPositionsForChecker(checker)
-
             this.setCheckersWhoCanMove(checker.getPosition());
 
-            if (! isRemovedAnyChecker || openPositions.length === 0) {
+            if (! isRemovedAnyChecker || this.getOpenPositionsForChecker(checker).length === 0) {
                 this.setCheckersWhoCanMove('all');
 
                 checker.setCanMoveWithoutRemoving(true);
 
                 this.setWhoWentLast(checker.getColor());
 
+                for (let checkerPositionNumber in this.checkers) {
+                    let anotherChecker = this.getChecker(checkerPositionNumber);
+
+                    anotherChecker.setCanMoveWithoutRemoving(true);
+
+                    if (anotherChecker.getColor() !== checker.getColor()) {
+                        this.getOpenPositionsForChecker(anotherChecker);
+                    }
+                }
+
                 this.rotateCheckers();
 
                 return true;
             }
 
-            checker.highlight();
+            checker.click();
             this.setActiveCheckerPositionNumber(checker.getPosition());
 
             this.highlightOpenPositionsToChecker(checker.getPosition())
@@ -918,6 +950,14 @@
             return this;
         }
 
+        unClickedAllCheckers() {
+            for (let checkerPositionNumber in this.checkers) {
+                this.getChecker(checkerPositionNumber).unClick();
+            }
+
+            return this;
+        }
+
         isChecker(positionNumber) {
             return Array.from(Object.keys(this.checkers)).includes(positionNumber.toString());
         }
@@ -934,7 +974,7 @@
             this.addListenerToChecker(newChecker);
 
             if (highlight) {
-                newChecker.highlight();
+                newChecker.click();
             }
 
             return newChecker;
@@ -949,9 +989,9 @@
             checker.element.addEventListener('click', () => {
                 if (checker.isActiveChecker()) {
                     this.unHighlightedAllPositions();
-                    this.unHighlightedAllCheckers();
+                    this.unClickedAllCheckers();
 
-                    checker.highlight();
+                    checker.click();
 
                     if (checker.getColor() !== this.getWhoWentLast() && this.isCheckerCanMove(checker.getPosition())) {
                         this.setActiveCheckerPositionNumber(checker.getPosition());
@@ -1000,6 +1040,7 @@
                 if (position.isHighlighted()) {
                     this.unHighlightedAllPositions();
                     this.unHighlightedAllCheckers();
+                    this.unClickedAllCheckers();
 
                     this.moveActiveCheckerToPosition(this.getActiveCheckerPositionNumber(), position.getPosition());
                 } else {
@@ -1151,7 +1192,7 @@
             return this.isDebug;
         }
 
-        setDebuggingMode(isDebug) {
+        setDebuggingMode(isDebug = true) {
             if (isDebug !== true && isDebug !== false) {
                 this.consoleLogIfDebug('Error in setDebuggingMode, invalid isDebug = ', isDebug);
 
