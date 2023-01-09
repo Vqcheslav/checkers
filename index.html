@@ -52,11 +52,11 @@
         }
 
         .rotate {
-            transform: rotate3d(1, 0, 0, 180deg)  rotate3d(0, 1, 0, 180deg);
+            transform: rotate3d(1, 0, 0, 180deg) rotate3d(0, 1, 0, 180deg);
         }
 
         .rotate-once {
-            transform: rotate3d(1, 0, 0, 180deg)  rotate3d(0, 1, 0, 180deg);
+            transform: rotate3d(1, 0, 0, 180deg) rotate3d(0, 1, 0, 180deg);
         }
 
         .dont-rotated {
@@ -695,7 +695,24 @@
 
                         if (checker.isCrown()) {
                             for (let i = 1; i <= 6; i++) {
-                                let nextPositionSecond = nextPosition + ((nextPosition - positionNumber) * i);
+                                let getNextPosition = (i) => {
+                                    return nextPosition + ((nextPosition - positionNumber) * i);
+                                }
+                                let nextPositionSecond = getNextPosition(i);
+
+                                if (
+                                    this.isChecker(nextPositionSecond)
+                                    && (
+                                        this.getChecker(nextPositionSecond).getColor() === checker.getColor()
+                                        || (
+                                            this.getChecker(nextPositionSecond).getColor() !== checker.getColor()
+                                            && this.isChecker(getNextPosition(i + 1))
+                                            && this.getChecker(getNextPosition(i + 1)).getColor() !== checker.getColor()
+                                        )
+                                    )
+                                ) {
+                                    break;
+                                }
 
                                 if (this.isPosition(nextPositionSecond)) {
                                     openPositions.push(nextPositionSecond);
